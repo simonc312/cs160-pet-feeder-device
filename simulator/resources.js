@@ -11,26 +11,29 @@ var configure = exports.configure = function(configuration) {
 			axes : [
 				new PinsSimulators.AnalogInputAxisDescription(
 					{
-						valueLabel : "Water Bottle Level",
+						valueLabel : "Water Level",
 						valueID : "water",
 						speed : 0.5,
-						defaultControl : PinsSimulators.SLIDER
+						defaultControl : PinsSimulators.SLIDER,
+						maxValue: 1000
 					}
 				),
 				new PinsSimulators.AnalogInputAxisDescription(
 					{
-						valueLabel : "Pellet Count",
-						valueID : "pellet",
-						speed : 0.5,
-						defaultControl : PinsSimulators.SLIDER
-					}
-				),
-				new PinsSimulators.AnalogInputAxisDescription(
-					{
-						valueLabel : "Lettuce Count",
+						valueLabel : "Lettuce",
 						valueID : "lettuce",
 						speed : 0.5,
-						defaultControl : PinsSimulators.SLIDER
+						defaultControl : PinsSimulators.SLIDER,
+						maxValue: 2
+					}
+				),
+				new PinsSimulators.AnalogInputAxisDescription(
+					{
+						valueLabel : "Hay Level",
+						valueID : "hay",
+						speed : 0.5,
+						defaultControl : PinsSimulators.SLIDER,
+						maxValue: 5
 					}
 				),
 			]
@@ -48,6 +51,6 @@ var read = exports.read = function() {
 
 exports.pins = {
 	water: { type: "A2D" },
-	pellet: { type: "A2D" },
+	hay: { type: "A2D" },
 	lettuce: { type: "A2D" }
 		};

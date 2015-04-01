@@ -2,6 +2,21 @@
 var blackSkin = new Skin( { fill:"black" } );
 var labelStyle = new Style( { font: "bold 30px", color:"white" } );
 var resourceLabelStyle = new Style( { font: "bold 20px", color:"white" } );
+var lettuceSkin = new Skin({width: 48,
+						   height: 48,
+						   fill:"white",
+						   texture: new Texture('lettuce.png')
+						   });
+var waterSkin = new Skin({width: 48,
+						   height: 48,
+						   fill:"white",
+						   texture: new Texture('water.png')
+						   });
+var haySkin = new Skin({width: 48,
+						   height: 48,
+						   fill:"white",
+						   texture: new Texture('hay.png')
+						   });
 Handler.bind("/getCount", Behavior({
 	onInvoke: function(handler, message){
 		count++;
@@ -26,7 +41,14 @@ Handler.bind("/takePicture", Behavior({
 		pictureIndex ++;
 		if(pictureIndex > 4)
 			pictureIndex = 2;
-		message.responseText = JSON.stringify( { url: "rabbit-" + pictureIndex + ".jpg" } );
+		message.responseText = JSON.stringify( { url: "rabbit-" + pictureIndex + "-Copy2.jpg" } );
+		message.status = 200;
+	}
+}));
+
+Handler.bind("/getResources", Behavior({
+	onInvoke: function(handler, message){
+		message.responseText = JSON.stringify( { water: waterDisplay.string, lettuce: lettuceDisplay.string, hay: hayDisplay.string } );
 		message.status = 200;
 	}
 }));
@@ -64,34 +86,38 @@ behavior: Object.create(Behavior.prototype,{
 }});
 	
 var waterDisplay = new resourceLabelTemplate({skin: new Skin({fill: "blue"}),name: "waterDisplay"});
-var pelletDisplay = new resourceLabelTemplate({skin: new Skin({fill: "red"}),name: "pelletDisplay"});
+var hayDisplay = new resourceLabelTemplate({skin: new Skin({fill: "red"}),name: "hayDisplay"});
 var lettuceDisplay = new resourceLabelTemplate({skin: new Skin({fill: "green"}),name: "lettuceDisplay"});
 	
 var MainContainer = Container.template(function($) { return { left: 0, right: 0, top: 0, bottom: 0, skin: blackSkin,
  						contents: [
- 								new Line(({left: 0, right:0, top:0, bottom:100, name: "counterLine",
+ 								new Line(({left: 0, right:0, top:0, bottom:150, name: "counterLine",
 									contents:[
 										new Label({left:0, right:0, height:30, string:"Counter:", style: labelStyle}),
 										counterLabel
 									]})),
-								new Line(({left: 0, right:0, top:30, bottom:0, name: "analogLine",
+								new Line(({left: 0, right:0, top:0, bottom:100, name: "analogLine",
 									contents:[
 										new Label({left:0, right:0, height:30, string:"Weight:", style: labelStyle}),
 										Label($,{left:0, right:0, height: 30, string:"---", style: labelStyle,  behavior: Object.create((MainContainer.behaviors[0]).prototype)})
 									]})),
-								new Line(({left: 0, right:0, top:160, bottom:0, name: "ResourcesLine",
+								new Line(({left: 0, right:0, top:100, bottom:0, name: "ResourcesLine",
 									contents:[
 										new Column(({left: 0, right:0, top:0, bottom:0, contents:[
+											new Content({left:0, right:0, top:0, bottom:0, skin: waterSkin}),
 											new Label({left:0, right:0, height:30, width: 100, string:"Water Level", style: resourceLabelStyle}),
 											waterDisplay
 										]})),
+						
 										new Column(({left: 0, right:0, top:0, bottom:0, contents:[
-											new Label({left:0, right:0, height:30, width: 100, string:"# Pellets", style: resourceLabelStyle}),
-											pelletDisplay
+											new Content({left:0, right:0, top:0, bottom:0, skin: lettuceSkin}),
+											new Label({left:0, right:0, height:30, width: 100, string:"Lettuce", style: resourceLabelStyle}),
+											lettuceDisplay
 										]})),
 										new Column(({left: 0, right:0, top:0, bottom:0, contents:[
-											new Label({left:0, right:0, height:30, width: 100, string:"# Lettuces", style: resourceLabelStyle}),
-											lettuceDisplay
+											new Content({left:0, right:0, top:0, bottom:0, skin: haySkin}),
+											new Label({left:0, right:0, height:30, width: 100, string:"Hay Level", style: resourceLabelStyle}),
+											hayDisplay
 										]}))
 										
 										
@@ -120,7 +146,7 @@ MainContainer.behaviors[1] = Behavior.template({
 	//trace('inside MainContainer onCreate!\n');
 		this.data = data;
 		this.lastWaterLevel = false;
-		this.lastPelletCount = false;
+		this.lastHayCount = false;
     	this.lastLettuceCount = false;
 		
 	},
@@ -130,20 +156,20 @@ MainContainer.behaviors[1] = Behavior.template({
 		var threshold = .001; 
         if ( this.lastWaterLevel === false ) {
 			this.lastWaterLevel = data.water;
-        	this.lastPelletCount = data.pellet;
+        	this.lastHayCount = data.hay;
         	this.lastLettuceCount = data.lettuce;
         }
         else if ( ( Math.abs( data.water - this.lastWaterLevel ) > threshold )){
         	waterDisplay.behavior.update(data.water);
         }
-       	else if ( Math.abs( data.pellet - this.lastPelletCount ) > threshold ){
-       		pelletDisplay.behavior.update(data.pellet);
+       	else if ( Math.abs( data.hay - this.lastHayCount ) > threshold ){
+       		hayDisplay.behavior.update(data.hay);
        	}
        	else if ( Math.abs( data.lettuce - this.lastLettuceCount ) > threshold ) {
        		lettuceDisplay.behavior.update(data.lettuce);
        	}
         this.lastWaterLevel = data.water;
-    	this.lastPelletCount = data.pellet;
+    	this.lastHayCount = data.hay;
     	this.lastLettuceCount = data.lettuce;
 	},
 })
@@ -165,7 +191,7 @@ var ApplicationBehavior = Behavior.template({
 	},
 })
 
-pictureIndex=0;
+pictureIndex=1;
 count = 0;
 application.invoke( new MessageWithObject( "pins:configure", {
         	analogSensor: {
@@ -178,8 +204,8 @@ application.invoke( new MessageWithObject( "pins:configure", {
                 require: "resources",
                 pins: {
                     water: { pin: 1 }, 
-					pellet: { pin: 2 }, 
-					lettuce: { pin: 3 } 
+					lettuce: { pin: 2 },
+					hay: { pin: 3 } 
                 }
             }
             
