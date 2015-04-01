@@ -1,16 +1,16 @@
 //@module
 exports.pins = {
-	analog: { type: "A2D" }
+	status: { type: "A2D" }
 };
 
 exports.configure = function() {
-    this.analog.init();
+    this.status.init();
 }
 
 exports.read = function() {
-    return this.analog.read();
+    return this.status.read();
 }
 
 exports.close = function() {
-	this.analog.close();
+	this.status.close();
 }

@@ -4,17 +4,17 @@ var PinsSimulators = require('PinsSimulators');
 var configure = exports.configure = function(configuration) {
 	this.pinsSimulator = shell.delegate("addSimulatorPart", {
 			header : { 
-				label : "Analog", 
-				name : "Analog Input", 
-				iconVariant : PinsSimulators.SENSOR_SLIDER 
+				label : "Status", 
+				name : "Status Input", 
+				iconVariant : PinsSimulators.SENSOR_BUTTON 
 			},
 			axes : [
 				new PinsSimulators.AnalogInputAxisDescription(
 					{
 						valueLabel : "Value",
-						valueID : "analogValue",
-						speed : 0.5,
-						defaultControl : PinsSimulators.SLIDER
+						valueID : "statusValue",
+						dataType: 'boolean',
+						defaultControl : PinsSimulators.BUTTON
 					}
 				),
 			]
@@ -27,9 +27,9 @@ var close = exports.close = function() {
 
 var read = exports.read = function() {
 	var axes = this.pinsSimulator.delegate("getValue");
-		return axes.analogValue;
+		return axes.statusValue;
 }
 
 exports.pins = {
-			analog: { type: "A2D" }
+			status: { type: "A2D" }
 		};

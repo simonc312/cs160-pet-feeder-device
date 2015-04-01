@@ -11,7 +11,7 @@ var configure = exports.configure = function(configuration) {
 			axes : [
 				new PinsSimulators.AnalogInputAxisDescription(
 					{
-						valueLabel : "Water Level",
+						valueLabel : "Water",
 						valueID : "water",
 						speed : 0.5,
 						defaultControl : PinsSimulators.SLIDER,
@@ -29,7 +29,7 @@ var configure = exports.configure = function(configuration) {
 				),
 				new PinsSimulators.AnalogInputAxisDescription(
 					{
-						valueLabel : "Hay Level",
+						valueLabel : "Hay",
 						valueID : "hay",
 						speed : 0.5,
 						defaultControl : PinsSimulators.SLIDER,

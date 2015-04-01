@@ -17,11 +17,9 @@ var haySkin = new Skin({width: 48,
 						   fill:"white",
 						   texture: new Texture('hay.png')
 						   });
-Handler.bind("/getCount", Behavior({
+Handler.bind("/getStatus", Behavior({
 	onInvoke: function(handler, message){
-		count++;
-		counterLabel.string = count;
-		message.responseText = JSON.stringify( { count: count } );
+		message.responseText = JSON.stringify( { status: statusLabel.string } );
 		message.status = 200;
 	}
 }));
@@ -38,11 +36,19 @@ Handler.bind("/reset", Behavior({
 Handler.bind("/takePicture", Behavior({
 	onInvoke: function(handler, message){
 		counterLabel.string = "picture taken";
-		pictureIndex ++;
-		if(pictureIndex > 4)
-			pictureIndex = 2;
-		message.responseText = JSON.stringify( { url: "rabbit-" + pictureIndex + "-Copy2.jpg" } );
-		message.status = 200;
+		count++;
+		if(statusLabel.behavior.getValue() == "Asleep"){
+			message.responseText = JSON.stringify( { url: "rabbit-sleep.png", warning: (count > 2) } );
+			message.status = 200;
+		}
+		else{
+			pictureIndex ++;
+			if(pictureIndex > 4)
+				pictureIndex = 2;
+			message.responseText = JSON.stringify( { url: "rabbit-" + pictureIndex + "-Copy2.jpg", warning: false } );
+			message.status = 200;
+		}
+		
 	}
 }));
 
@@ -55,10 +61,10 @@ Handler.bind("/getResources", Behavior({
 }));
 
 
-Handler.bind("/gotAnalogResult", Object.create(Behavior.prototype, {
+Handler.bind("/gotStatusResult", Object.create(Behavior.prototype, {
 	onInvoke: { value: function( handler, message ){
         		var result = message.requestObject;  
-        		application.distribute( "onAnalogValueChanged", result ); 		
+        		application.distribute( "onStatusValueChanged", result ); 		
         	}}
 }));
 
@@ -80,12 +86,14 @@ behavior: Object.create(Behavior.prototype,{
 	onCreate: { value: function(content,data){
 		this.data = data;
 		var self = content;
-		this.update = function(result) { self.string = result.toString().substring( 0, 5 );};
+		this.getValue = function() {return self.string;};
+		this.update = function(result) { self.string = result.toString().substring( 0, 6 );};
 		//trace('inside onCreate of ResourceLabelBehavior\n')
 	}},
 })
 }});
 	
+var statusLabel = new resourceLabelTemplate({name: "statusLabel"});
 var waterDisplay = new resourceLabelTemplate({skin: new Skin({fill: "blue"}),name: "waterDisplay"});
 var hayDisplay = new resourceLabelTemplate({skin: new Skin({fill: "red"}),name: "hayDisplay"});
 var lettuceDisplay = new resourceLabelTemplate({skin: new Skin({fill: "green"}),name: "lettuceDisplay"});
@@ -97,28 +105,31 @@ var MainContainer = Container.template(function($) { return { left: 0, right: 0,
 										new Label({left:0, right:0, height:30, string:"Counter:", style: labelStyle}),
 										counterLabel
 									]})),
-								new Line(({left: 0, right:0, top:0, bottom:100, name: "analogLine",
+								new Line(({left: 0, right:0, top:0, bottom:100, name: "statusLine",
 									contents:[
-										new Label({left:0, right:0, height:30, string:"Weight:", style: labelStyle}),
-										Label($,{left:0, right:0, height: 30, string:"---", style: labelStyle,  behavior: Object.create((MainContainer.behaviors[0]).prototype)})
+										new Label({left:0, right:0, height:30, string:"Status:", style: labelStyle}),
+										statusLabel
 									]})),
 								new Line(({left: 0, right:0, top:100, bottom:0, name: "ResourcesLine",
 									contents:[
 										new Column(({left: 0, right:0, top:0, bottom:0, contents:[
 											new Content({left:0, right:0, top:0, bottom:0, skin: waterSkin}),
-											new Label({left:0, right:0, height:30, width: 100, string:"Water Level", style: resourceLabelStyle}),
-											waterDisplay
+											new Label({left:0, right:0, height:30, width: 100, string:"Water", style: resourceLabelStyle}),
+											waterDisplay,
+											new Label({left:0, right:0, height:30, width: 100, string:"ml", style: resourceLabelStyle}),
 										]})),
 						
 										new Column(({left: 0, right:0, top:0, bottom:0, contents:[
 											new Content({left:0, right:0, top:0, bottom:0, skin: lettuceSkin}),
 											new Label({left:0, right:0, height:30, width: 100, string:"Lettuce", style: resourceLabelStyle}),
-											lettuceDisplay
+											lettuceDisplay,
+											new Label({left:0, right:0, height:30, width: 100, string:"heads", style: resourceLabelStyle}),
 										]})),
 										new Column(({left: 0, right:0, top:0, bottom:0, contents:[
 											new Content({left:0, right:0, top:0, bottom:0, skin: haySkin}),
-											new Label({left:0, right:0, height:30, width: 100, string:"Hay Level", style: resourceLabelStyle}),
-											hayDisplay
+											new Label({left:0, right:0, height:30, width: 100, string:"Hay", style: resourceLabelStyle}),
+											hayDisplay,
+											new Label({left:0, right:0, height:30, width: 100, string:"bushes", style: resourceLabelStyle}),
 										]}))
 										
 										
@@ -126,30 +137,31 @@ var MainContainer = Container.template(function($) { return { left: 0, right: 0,
 								
 								
 						],
-						behavior: Object.create((MainContainer.behaviors[1]).prototype),
+						behavior: Object.create((MainContainer.behaviors[0]).prototype),
 								  
 						
 				 }});
 
 
 MainContainer.behaviors = new Array(1);
-MainContainer.behaviors[0] = Behavior.template({
-
-	onAnalogValueChanged: function(content, result) {
-		content.string = result.toString().substring( 0, 5 );
-	},
-})
 
 //update resource labels and set up values
-MainContainer.behaviors[1] = Behavior.template({
+MainContainer.behaviors[0] = Behavior.template({
 
 	onCreate: function(content, data) {
 	//trace('inside MainContainer onCreate!\n');
 		this.data = data;
 		this.lastWaterLevel = false;
-		this.lastHayCount = false;
-    	this.lastLettuceCount = false;
 		
+	},
+	onStatusValueChanged: function(content, result) {
+		var status = "Asleep";
+		if(result)
+			status = "Active";
+		if(status != statusLabel.behavior.getValue()){	
+			count = 0; //reset picture count everytime 
+			statusLabel.behavior.update(status);
+		}
 	},
 
 	onResourcesValueChanged: function(content, data) {
@@ -175,7 +187,7 @@ MainContainer.behaviors[1] = Behavior.template({
 	},
 })
 
-MainContainer.behaviors[2] = Behavior.template({
+MainContainer.behaviors[1] = Behavior.template({
 
 	update: function(content, result) {
 		content.string = result.toString().substring( 0, 5 );
@@ -195,10 +207,10 @@ var ApplicationBehavior = Behavior.template({
 pictureIndex=1;
 count = 0;
 application.invoke( new MessageWithObject( "pins:configure", {
-        	analogSensor: {
-                require: "analog",
+        	statusSensor: {
+                require: "status",
                 pins: {
-                    analog: { pin: 52 }
+                    status: { pin: 4 }
                 }
             },
             resourceSensors: {
@@ -212,13 +224,13 @@ application.invoke( new MessageWithObject( "pins:configure", {
             
         }));
     	
-/* Use the initialized analogSensor object and repeatedly 
+/* Use the initialized statusSensor object and repeatedly 
    call its read method with a given interval.  */
-application.invoke( new MessageWithObject( "pins:/analogSensor/read?" + 
+application.invoke( new MessageWithObject( "pins:/statusSensor/read?" + 
 			serializeQuery( {
 				repeat: "on",
 				interval: 20,
-				callback: "/gotAnalogResult"
+				callback: "/gotStatusResult"
 			} ) ) );
 			
 application.invoke( new MessageWithObject( "pins:/resourceSensors/read?" + 
