@@ -48,6 +48,7 @@ Handler.bind("/takePicture", Behavior({
 
 Handler.bind("/getResources", Behavior({
 	onInvoke: function(handler, message){
+		//handler.wait(1000); //will call onComplete after 1 seconds
 		message.responseText = JSON.stringify( { water: waterDisplay.string, lettuce: lettuceDisplay.string, hay: hayDisplay.string } );
 		message.status = 200;
 	}
@@ -63,8 +64,8 @@ Handler.bind("/gotAnalogResult", Object.create(Behavior.prototype, {
 
 Handler.bind("/gotResourcesResult", Object.create(Behavior.prototype, {
 	onInvoke: { value: function( handler, message ){
-				//trace('inside gotResourcesResult!\n');
-        		var result = message.requestObject; 
+				//trace('inside gotResourcesResult!\n');		
+           		var result = message.requestObject; 
         		application.distribute( "onResourcesValueChanged", result ); 		
         	}}
 }));
