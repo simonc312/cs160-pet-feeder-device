@@ -1,7 +1,11 @@
 //@program
+var MAX_LETTUCE = 2;
+var MAX_WATER = 1000;
+var MAX_HAY = 5;
 var blackSkin = new Skin( { fill:"black" } );
-var labelStyle = new Style( { font: "bold 30px", color:"white" } );
+var labelStyle = new Style( { font: "bold 30px", color:"white",  horizontal: 'center' } );
 var resourceLabelStyle = new Style( { font: "bold 20px", color:"white" } );
+var updateLabelStyle = new Style({font:"bold 20px", color:"white", horizontal: 'center', vertical: 'middle'});
 var lettuceSkin = new Skin({width: 48,
 						   height: 48,
 						   fill:"white",
@@ -26,19 +30,50 @@ Handler.bind("/getStatus", Behavior({
 
 Handler.bind("/reset", Behavior({
 	onInvoke: function(handler, message){
-		count = 0;
-		counterLabel.string = "0";
-		message.responseText = JSON.stringify( { count: "0" } );
+		pictureCount = 0;
+		updateLabel.string = "delete pictures";
+		message.responseText = JSON.stringify( { pictureCount: "0" } );
+		message.status = 200;
+	}
+}));
+
+Handler.bind("/addWater", Behavior({
+	onInvoke: function(handler, message){
+		updateLabel.string = "Water Added";
+		if(waterDisplay.behavior.getValue() == MAX_WATER)
+			message.responseText = JSON.stringify( { resource: "Max Water Level" } );
+		else
+			message.responseText = JSON.stringify( { resource: "+ 100ml Water" } );
+		message.status = 200;
+	}
+}));
+Handler.bind("/addLettuce", Behavior({
+	onInvoke: function(handler, message){
+		updateLabel.string = "Lettuce Added";
+		if(lettuceDisplay.behavior.getValue() == MAX_LETTUCE)
+			message.responseText = JSON.stringify( { resource: "Max Lettuce Level" } );
+		else
+			message.responseText = JSON.stringify( { resource: "+ 1 Lettuce Head" } );
+		message.status = 200;
+	}
+}));
+Handler.bind("/addHay", Behavior({
+	onInvoke: function(handler, message){
+		updateLabel.string = "Hay Added";
+		if(hayDisplay.behavior.getValue() == MAX_HAY)
+			message.responseText = JSON.stringify( { resource: "Max Hay Level" } );
+		else
+		message.responseText = JSON.stringify( { resource: "+1 Hay Bush" } );
 		message.status = 200;
 	}
 }));
 
 Handler.bind("/takePicture", Behavior({
 	onInvoke: function(handler, message){
-		counterLabel.string = "picture taken";
-		count++;
+		updateLabel.string = "new pic!";
+		pictureCount++;
 		if(statusLabel.behavior.getValue() == "Asleep"){
-			message.responseText = JSON.stringify( { url: "rabbit-sleep.png", warning: (count > 2) } );
+			message.responseText = JSON.stringify( { url: "rabbit-sleep.png", warning: (pictureCount > 2) } );
 			message.status = 200;
 		}
 		else{
@@ -76,7 +111,7 @@ Handler.bind("/gotResourcesResult", Object.create(Behavior.prototype, {
         	}}
 }));
 
-var counterLabel = new Label({left:0, right:0, height:30, string:"0", style: labelStyle});
+
 var ResourceLabelBehavior = Behavior.template({
 	
 }); 
@@ -92,7 +127,8 @@ behavior: Object.create(Behavior.prototype,{
 	}},
 })
 }});
-	
+
+var updateLabel = new Label({left:0, right:0, height:30, string:"---", style: updateLabelStyle});
 var statusLabel = new resourceLabelTemplate({name: "statusLabel"});
 var waterDisplay = new resourceLabelTemplate({skin: new Skin({fill: "blue"}),name: "waterDisplay"});
 var hayDisplay = new resourceLabelTemplate({skin: new Skin({fill: "red"}),name: "hayDisplay"});
@@ -100,10 +136,10 @@ var lettuceDisplay = new resourceLabelTemplate({skin: new Skin({fill: "green"}),
 	
 var MainContainer = Container.template(function($) { return { left: 0, right: 0, top: 0, bottom: 0, skin: blackSkin,
  						contents: [
- 								new Line(({left: 0, right:0, top:0, bottom:150, name: "counterLine",
+ 								new Line(({left: 0, right:0, top:0, bottom:150, name: "updateLine",
 									contents:[
-										new Label({left:0, right:0, height:30, string:"Counter:", style: labelStyle}),
-										counterLabel
+										new Label({left:0, right:0, height:30, string:"Updates:", style: labelStyle}),
+										updateLabel
 									]})),
 								new Line(({left: 0, right:0, top:0, bottom:100, name: "statusLine",
 									contents:[
@@ -159,7 +195,7 @@ MainContainer.behaviors[0] = Behavior.template({
 		if(result)
 			status = "Active";
 		if(status != statusLabel.behavior.getValue()){	
-			count = 0; //reset picture count everytime 
+			pictureCount = 0; //reset picture pictureCount everytime 
 			statusLabel.behavior.update(status);
 		}
 	},
@@ -205,7 +241,7 @@ var ApplicationBehavior = Behavior.template({
 })
 
 pictureIndex=1;
-count = 0;
+pictureCount = 0;
 application.invoke( new MessageWithObject( "pins:configure", {
         	statusSensor: {
                 require: "status",
